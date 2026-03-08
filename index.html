@@ -792,12 +792,12 @@ INSTRUCCIONES IMPORTANTES:
 3. Para generar piezas, incluye al final de tu mensaje un bloque JSON con este formato exacto:
    [PIEZAS_JSON]
    [
-     {"id":"pieza_1","nombre":"Nombre Pieza","icono":"⚙️","descripcion":"descripción corta","dimensiones":"100x50mm"},
+     {"id":"pieza_1","nombre":"Nombre Pieza","icono":"⚙️","descripcion":"max 8 palabras","dimensiones":"100x50mm"},
      ...
    ]
    [/PIEZAS_JSON]
 4. Los iconos deben ser emojis relevantes a la pieza (⚙️🔩🔧🏗️🛞🔋💡🔌📡🪝⛓️🔑🔐🧲🪤🔨🪛🔩🗜️).
-5. Genera entre 5 y 15 piezas según la complejidad.
+5. Genera entre 5 y 10 piezas máximo. Las descripciones deben ser MUY cortas (máximo 8 palabras cada una).
 6. Habla siempre en español.
 7. Sé creativo y técnico. Pregunta sobre: tipo de máquina, función principal, dimensiones, material, fuente de energía, velocidad, capacidad, entorno de uso, etc.`;
 
@@ -807,7 +807,7 @@ INSTRUCCIONES IMPORTANTES:
     body: JSON.stringify({
       system_instruction: { parts: [{ text: systemInstruction }] },
       contents: conversationHistory,
-      generationConfig: { temperature: 0.8, maxOutputTokens: 1500 }
+      generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }
     })
   });
 
@@ -863,21 +863,59 @@ async function askNext(msg) {
 }
 
 function processGeminiResponse(text) {
-  const jsonMatch = text.match(/\[PIEZAS_JSON\]([\s\S]*?)\[\/PIEZAS_JSON\]/);
   let displayText = text;
+  let piezasData = null;
 
-  if (jsonMatch) {
-    displayText = text.replace(/\[PIEZAS_JSON\][\s\S]*?\[\/PIEZAS_JSON\]/, '').trim();
+  // Strategy 1: explicit [PIEZAS_JSON] block
+  const tagMatch = text.match(/\[PIEZAS_JSON\]([\s\S]*?)\[\/PIEZAS_JSON\]/);
+  if (tagMatch) {
     try {
-      const piezasData = JSON.parse(jsonMatch[1].trim());
-      pieces = piezasData;
-      renderPalette();
-      appendMessage('gemini', displayText || '✅ ¡He generado las piezas de tu máquina! Arrástralas al lienzo para construir el plano.');
-      appendMessage('gemini', `🎉 Se han generado <strong>${pieces.length} piezas</strong>. Encuéntralas en la barra superior del lienzo.`, false, true);
-    } catch (e) {
-      appendMessage('gemini', displayText);
+      piezasData = JSON.parse(tagMatch[1].trim());
+      displayText = text.replace(/\[PIEZAS_JSON\][\s\S]*?\[\/PIEZAS_JSON\]/, '').trim();
+    } catch(e) {}
+  }
+
+  // Strategy 2: find any JSON array in the response
+  if (!piezasData) {
+    const arrayMatch = text.match(/\[\s*\{[\s\S]*"nombre"[\s\S]*\}\s*\]/);
+    if (arrayMatch) {
+      try {
+        piezasData = JSON.parse(arrayMatch[0]);
+        displayText = text.replace(arrayMatch[0], '').trim();
+      } catch(e) {}
     }
+  }
+
+  // Strategy 3: find JSON inside ```json code blocks
+  if (!piezasData) {
+    const codeMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeMatch) {
+      try {
+        const parsed = JSON.parse(codeMatch[1].trim());
+        if (Array.isArray(parsed)) {
+          piezasData = parsed;
+          displayText = text.replace(codeMatch[0], '').trim();
+        }
+      } catch(e) {}
+    }
+  }
+
+  if (piezasData && Array.isArray(piezasData) && piezasData.length > 0) {
+    // Normalize pieces — ensure required fields exist
+    pieces = piezasData.map((p, i) => ({
+      id: p.id || `pieza_${i+1}`,
+      nombre: p.nombre || p.name || `Pieza ${i+1}`,
+      icono: p.icono || p.icon || '⚙️',
+      descripcion: p.descripcion || p.description || '',
+      dimensiones: p.dimensiones || p.dimensions || ''
+    }));
+    renderPalette();
+    const msg = displayText.replace(/```[\s\S]*?```/g, '').trim();
+    appendMessage('gemini', msg || '✅ ¡He generado las piezas de tu máquina! Arrástralas al lienzo para construir el plano.');
+    appendMessage('gemini', `🎉 Se han generado <strong>${pieces.length} piezas</strong>. Encuéntralas en la barra superior del lienzo.`, false, true);
   } else {
+    // Clean up any leftover code blocks before showing
+    displayText = text.replace(/```[\s\S]*?```/g, '').trim();
     appendMessage('gemini', displayText);
   }
 }
