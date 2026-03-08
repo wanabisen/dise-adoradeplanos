@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MaquinaPlanos — Diseña tu máquina</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --accent1: #ff6b35;
+    --accent2: #00d4ff;
+    --accent3: #a855f7;
+    --accent4: #22c55e;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --border: #2a2a3a;
+    --grid: rgba(0,212,255,0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob1 { width: 600px; height: 600px; background: var(--accent1); top: -200px; left: -200px; }
+  .blob2 { width: 500px; height: 500px; background: var(--accent2); bottom: -150px; right: -150px; }
+  .blob3 { width: 400px; height: 400px; background: var(--accent3); top: 40%; left: 40%; }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    background: rgba(10,10,15,0.7);
+  }
+
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent1); }
+  .logo em { color: var(--accent2); font-style: normal; }
+
+  .header-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    opacity: 0.7;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    position: relative;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    height: calc(100vh - 73px);
+  }
+
+  /* SIDEBAR - CHAT / QUESTIONS */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    background: rgba(18,18,26,0.8);
+    backdrop-filter: blur(10px);
+  }
+
+  .sidebar-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-header p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* API KEY INPUT */
+  .api-setup {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .api-setup label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .api-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .api-input-row input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-input-row input:focus { border-color: var(--accent2); }
+
+  .btn-connect {
+    background: var(--accent2);
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .btn-connect:hover { opacity: 0.85; }
+
+  /* CHAT MESSAGES */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeSlideIn 0.3s ease;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  .msg.gemini .msg-bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .msg.user .msg-bubble {
+    background: linear-gradient(135deg, var(--accent1), #ff9a00);
+    color: #fff;
+    border-top-right-radius: 4px;
+    align-self: flex-end;
+    text-align: right;
+  }
+  .msg.user { align-items: flex-end; }
+
+  .options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .option-btn {
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .option-btn:hover, .option-btn.selected {
+    background: var(--accent2);
+    color: #000;
+    font-weight: 500;
+  }
+
+  /* USER INPUT */
+  .chat-input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s;
+    height: 44px;
+  }
+  .chat-input:focus { border-color: var(--accent1); }
+
+  .btn-send {
+    background: var(--accent1);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn-send:hover { opacity: 0.85; transform: scale(1.05); }
+  .btn-send:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Progress bar */
+  .progress-bar {
+    padding: 10px 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* CANVAS AREA */
+  .canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: rgba(10,10,15,0.5);
+  }
+
+  .canvas-toolbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .canvas-toolbar h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .toolbar-sep { flex: 1; }
+
+  .toolbar-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .toolbar-btn:hover { border-color: var(--accent1); color: var(--accent1); }
+  .toolbar-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+  /* PIECES PALETTE */
+  .palette-panel {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .palette-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 4px;
+  }
+
+  .piece-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    cursor: grab;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  .piece-chip:hover {
+    border-color: var(--accent3);
+    color: var(--accent3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(168,85,247,0.2);
+  }
+  .piece-chip:active { cursor: grabbing; }
+
+  .piece-icon { font-size: 1rem; }
+
+  /* BLUEPRINT CANVAS */
+  .blueprint-canvas-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #blueprintCanvas {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    cursor: crosshair;
+  }
+
+  /* Blueprint paper effect */
+  #blueprintCanvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,212,255,0.02) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Ruler marks */
+  .canvas-ruler-h, .canvas-ruler-v {
+    position: absolute;
+    background: var(--surface);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--muted);
+    z-index: 5;
+  }
+  .canvas-ruler-h { top: 0; left: 20px; right: 0; height: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
+  .canvas-ruler-v { left: 0; top: 20px; bottom: 0; width: 20px; border-right: 1px solid var(--border); }
+
+  /* Placed pieces on canvas */
+  .placed-piece {
+    position: absolute;
+    background: rgba(26,26,38,0.95);
+    border: 1.5px solid var(--accent2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: move;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 100px;
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.1), 0 4px 20px rgba(0,0,0,0.4);
+    transition: box-shadow 0.15s;
+    z-index: 10;
+  }
+  .placed-piece:hover {
+    box-shadow: 0 0 0 2px var(--accent2), 0 8px 30px rgba(0,212,255,0.2);
+  }
+  .placed-piece.selected {
+    border-color: var(--accent1);
+    box-shadow: 0 0 0 2px var(--accent1), 0 8px 30px rgba(255,107,53,0.3);
+  }
+  .placed-piece .piece-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .placed-piece .piece-label {
+    font-size: 0.75rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .placed-piece .piece-dim {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+  .placed-piece .delete-piece {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    display: none;
+    align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .placed-piece:hover .delete-piece,
+  .placed-piece.selected .delete-piece {
+    display: flex;
+  }
+
+  /* DROP ZONE HINT */
+  .drop-hint {
+    position: absolute;
+    inset: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0.25;
+    transition: opacity 0.3s;
+  }
+  .drop-hint.hidden { opacity: 0; }
+  .drop-hint-icon { font-size: 3rem; margin-bottom: 12px; }
+  .drop-hint-text {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    padding: 8px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(18,18,26,0.8);
+  }
+  .status-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .status-dot.active { background: var(--accent4); animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  /* LOADING INDICATOR */
+  .typing-indicator {
+    display: flex; gap: 4px; align-items: center; padding: 10px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; border-top-left-radius: 4px;
+    width: fit-content;
+  }
+  .typing-dot {
+    width: 6px; height: 6px; background: var(--accent2);
+    border-radius: 50%;
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%,80%,100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  /* EXPORT MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--accent2);
+  }
+  .modal pre {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text);
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+  .modal-btns { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn.primary { background: var(--accent1); color: #fff; }
+  .modal-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+
+  /* Drag over effect */
+  #blueprintCanvas.drag-over {
+    background-color: rgba(0,212,255,0.03);
+    outline: 2px dashed var(--accent2);
+    outline-offset: -10px;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 50vh 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<header>
+  <div class="logo">Maquina<span>Planos</span><em>.</em></div>
+  <div class="header-badge">Powered by Gemini AI</div>
+</header>
+
+<main>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🤖 Asistente de Diseño</h2>
+      <p>Responde las preguntas para que Gemini genere las piezas de tu máquina.</p>
+    </div>
+
+    <div class="api-setup" style="display:none">
+      <label>🔑 API Key de Gemini</label>
+      <div class="api-input-row">
+        <input type="password" id="apiKeyInput" placeholder="AIza..." />
+        <button class="btn-connect" onclick="connectGemini()">Conectar</button>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">0 / 20</div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chatInput" placeholder="Escribe tu respuesta..." rows="1" disabled
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="autoResize(this)"></textarea>
+      <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>↑</button>
+    </div>
+  </aside>
+
+  <!-- CANVAS -->
+  <section class="canvas-area">
+    <div class="canvas-toolbar">
+      <h3>📐 Lienzo de Planos</h3>
+      <div class="toolbar-sep"></div>
+      <button class="toolbar-btn" onclick="clearCanvas()">
+        <span>🗑</span> Limpiar
+      </button>
+      <button class="toolbar-btn" onclick="exportJSON()">
+        <span>📋</span> Exportar JSON
+      </button>
+      <button class="toolbar-btn" onclick="exportSVG()">
+        <span>⬇</span> Exportar SVG
+      </button>
+    </div>
+
+    <div class="palette-panel" id="palettePanel">
+      <span class="palette-label">Piezas:</span>
+      <span style="font-size:0.72rem;color:var(--muted);font-style:italic;">Las piezas aparecerán aquí tras la conversación con Gemini.</span>
+    </div>
+
+    <div class="blueprint-canvas-wrapper">
+      <div id="blueprintCanvas"
+        ondragover="onDragOver(event)"
+        ondrop="onDrop(event)"
+        ondragleave="onDragLeave(event)"
+        onclick="deselectAll()">
+        <div class="drop-hint" id="dropHint">
+          <div class="drop-hint-icon">📦</div>
+          <div class="drop-hint-text">Arrastra las piezas aquí<br>para construir tu plano</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Sin conectar</span>
+      </div>
+      <div class="status-item">📦 <span id="pieceCount">0</span> piezas en lienzo</div>
+      <div class="status-item">🖱 <span id="coords">0, 0</span></div>
+    </div>
+  </section>
+</main>
+
+<!-- Modal exportar -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h3 id="modalTitle">Exportar Plano</h3>
+    <pre id="modalContent"></pre>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeModal()">Cerrar</button>
+      <button class="modal-btn primary" onclick="copyExport()">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────
+let apiKey = 'AIzaSyBGzntAeRhAkYsKV6xB0cbMnopn5vYh5ow';
+let conversationHistory = [];
+let questionCount = 0;
+const MAX_QUESTIONS = 20;
+let pieces = []; // generated pieces from Gemini
+let placedPieces = []; // pieces on canvas
+let draggingChip = null;
+let draggingPlaced = null;
+let dragOffset = { x: 0, y: 0 };
+let selectedPiece = null;
+
+// ─── GEMINI ──────────────────────────────────────────────────────────
+function connectGemini() {
+  showStatus('Gemini conectado ✓', true);
+  document.getElementById('chatInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  startConversation();
+}
+
+async function callGemini(userMessage) {
+  conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+
+  const systemInstruction = `Eres MaquinaPlanos, un asistente experto en diseño técnico de maquinaria industrial e inventos.
+Tu objetivo es ayudar al usuario a definir su máquina haciéndole preguntas concretas (máximo ${MAX_QUESTIONS} en total).
+Lleva la cuenta de cuántas preguntas has hecho (has hecho ${questionCount} hasta ahora).
+
+INSTRUCCIONES IMPORTANTES:
+1. Haz solo UNA pregunta por turno, clara y específica.
+2. Cuando tengas suficiente info (mínimo 5 respuestas), o cuando el usuario diga que ya terminó, genera las PIEZAS.
+3. Para generar piezas, incluye al final de tu mensaje un bloque JSON con este formato exacto:
+   [PIEZAS_JSON]
+   [
+     {"id":"pieza_1","nombre":"Nombre Pieza","icono":"⚙️","descripcion":"descripción corta","dimensiones":"100x50mm"},
+     ...
+   ]
+   [/PIEZAS_JSON]
+4. Los iconos deben ser emojis relevantes a la pieza (⚙️🔩🔧🏗️🛞🔋💡🔌📡🪝⛓️🔑🔐🧲🪤🔨🪛🔩🗜️).
+5. Genera entre 5 y 15 piezas según la complejidad.
+6. Habla siempre en español.
+7. Sé creativo y técnico. Pregunta sobre: tipo de máquina, función principal, dimensiones, material, fuente de energía, velocidad, capacidad, entorno de uso, etc.`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemInstruction }] },
+      contents: conversationHistory,
+      generationConfig: { temperature: 0.8, maxOutputTokens: 1500 }
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || 'Error de API');
+  }
+
+  const data = await response.json();
+  const assistantText = data.candidates[0].content.parts[0].text;
+  conversationHistory.push({ role: 'model', parts: [{ text: assistantText }] });
+  return assistantText;
+}
+
+// ─── CONVERSATION ────────────────────────────────────────────────────
+async function startConversation() {
+  appendMessage('gemini', '¡Hola! Soy tu asistente de diseño de máquinas. 🛠️ Voy a hacerte algunas preguntas para generar los planos de tu máquina. ¿Comenzamos?', true);
+  await askNext('Hola, quiero diseñar una máquina.');
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || !apiKey) return;
+
+  input.value = '';
+  autoResize(input);
+  appendMessage('user', msg);
+  questionCount++;
+  updateProgress();
+
+  showTyping();
+  try {
+    const response = await callGemini(msg);
+    hideTyping();
+    processGeminiResponse(response);
+  } catch (e) {
+    hideTyping();
+    appendMessage('gemini', `❌ Error: ${e.message}`);
+  }
+}
+
+async function askNext(msg) {
+  showTyping();
+  try {
+    const response = await callGemini(msg);
+    hideTyping();
+    processGeminiResponse(response);
+  } catch (e) {
+    hideTyping();
+    appendMessage('gemini', `❌ Error al conectar con Gemini: ${e.message}`);
+  }
+}
+
+function processGeminiResponse(text) {
+  const jsonMatch = text.match(/\[PIEZAS_JSON\]([\s\S]*?)\[\/PIEZAS_JSON\]/);
+  let displayText = text;
+
+  if (jsonMatch) {
+    displayText = text.replace(/\[PIEZAS_JSON\][\s\S]*?\[\/PIEZAS_JSON\]/, '').trim();
+    try {
+      const piezasData = JSON.parse(jsonMatch[1].trim());
+      pieces = piezasData;
+      renderPalette();
+      appendMessage('gemini', displayText || '✅ ¡He generado las piezas de tu máquina! Arrástralas al lienzo para construir el plano.');
+      appendMessage('gemini', `🎉 Se han generado <strong>${pieces.length} piezas</strong>. Encuéntralas en la barra superior del lienzo.`, false, true);
+    } catch (e) {
+      appendMessage('gemini', displayText);
+    }
+  } else {
+    appendMessage('gemini', displayText);
+  }
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────
+function appendMessage(role, text, withOptions = false, isHTML = false) {
+  const container = document.getElementById('chatMessages');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'gemini' ? '🤖 Gemini' : '👤 Tú';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (isHTML) bubble.innerHTML = text;
+  else bubble.textContent = text;
+
+  msg.appendChild(label);
+  msg.appendChild(bubble);
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+let typingEl = null;
+function showTyping() {
+  const container = document.getElementById('chatMessages');
+  typingEl = document.createElement('div');
+  typingEl.className = 'msg gemini';
+  typingEl.innerHTML = `<div class="msg-label">🤖 Gemini</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  container.appendChild(typingEl);
+  container.scrollTop = container.scrollHeight;
+}
+function hideTyping() {
+  if (typingEl) { typingEl.remove(); typingEl = null; }
+}
+
+function updateProgress() {
+  const pct = Math.min((questionCount / MAX_QUESTIONS) * 100, 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${questionCount} / ${MAX_QUESTIONS}`;
+}
+
+function showStatus(text, active) {
+  document.getElementById('statusText').textContent = text;
+  document.getElementById('statusDot').className = 'status-dot' + (active ? ' active' : '');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ─── PALETTE ──────────────────────────────────────────────────────────
+function renderPalette() {
+  const panel = document.getElementById('palettePanel');
+  panel.innerHTML = '<span class="palette-label">Piezas:</span>';
+
+  pieces.forEach(piece => {
+    const chip = document.createElement('div');
+    chip.className = 'piece-chip';
+    chip.draggable = true;
+    chip.innerHTML = `<span class="piece-icon">${piece.icono}</span>${piece.nombre}`;
+    chip.title = piece.descripcion;
+    chip.dataset.pieceId = piece.id;
+
+    chip.addEventListener('dragstart', (e) => {
+      draggingChip = piece;
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    chip.addEventListener('dragend', () => { draggingChip = null; });
+
+    panel.appendChild(chip);
+  });
+}
+
+// ─── CANVAS DRAG & DROP ───────────────────────────────────────────────
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  document.getElementById('blueprintCanvas').classList.add('drag-over');
+}
+function onDragLeave(e) {
+  document.getElementById('blueprintCanvas').classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('blueprintCanvas').classList.remove('drag-over');
+  if (!draggingChip) return;
+
+  const canvas = document.getElementById('blueprintCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left - 60;
+  const y = e.clientY - rect.top - 30;
+
+  placePiece(draggingChip, x, y);
+  draggingChip = null;
+  document.getElementById('dropHint').classList.add('hidden');
+}
+
+function placePiece(piece, x, y) {
+  const canvas = document.getElementById('blueprintCanvas');
+  const el = document.createElement('div');
+  el.className = 'placed-piece';
+  el.style.left = Math.max(0, x) + 'px';
+  el.style.top = Math.max(0, y) + 'px';
+
+  const id = Date.now() + Math.random();
+  el.dataset.id = id;
+
+  el.innerHTML = `
+    <div class="piece-name">${piece.icono} ${piece.nombre}</div>
+    <div class="piece-label">${piece.descripcion}</div>
+    <div class="piece-dim">${piece.dimensiones || ''}</div>
+    <button class="delete-piece" onclick="deletePiece('${id}',event)">×</button>
+  `;
+
+  // Drag to move
+  el.addEventListener('mousedown', startMovePiece);
+  el.addEventListener('click', (e) => { e.stopPropagation(); selectPiece(el); });
+
+  canvas.appendChild(el);
+  placedPieces.push({ id, piece, el });
+  updatePieceCount();
+}
+
+function startMovePiece(e) {
+  if (e.target.classList.contains('delete-piece')) return;
+  e.preventDefault();
+  const el = e.currentTarget;
+  selectPiece(el);
+  const rect = el.getBoundingClientRect();
+  dragOffset.x = e.clientX - rect.left;
+  dragOffset.y = e.clientY - rect.top;
+  draggingPlaced = el;
+
+  const onMove = (ev) => {
+    const canvas = document.getElementById('blueprintCanvas');
+    const cr = canvas.getBoundingClientRect();
+    let nx = ev.clientX - cr.left - dragOffset.x;
+    let ny = ev.clientY - cr.top - dragOffset.y;
+    nx = Math.max(0, Math.min(cr.width - el.offsetWidth, nx));
+    ny = Math.max(0, Math.min(cr.height - el.offsetHeight, ny));
+    el.style.left = nx + 'px';
+    el.style.top = ny + 'px';
+  };
+  const onUp = () => {
+    draggingPlaced = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function selectPiece(el) {
+  deselectAll();
+  el.classList.add('selected');
+  selectedPiece = el;
+}
+
+function deselectAll() {
+  document.querySelectorAll('.placed-piece').forEach(p => p.classList.remove('selected'));
+  selectedPiece = null;
+}
+
+function deletePiece(id, e) {
+  e.stopPropagation();
+  const idx = placedPieces.findIndex(p => p.id == id);
+  if (idx !== -1) {
+    placedPieces[idx].el.remove();
+    placedPieces.splice(idx, 1);
+  }
+  updatePieceCount();
+}
+
+function updatePieceCount() {
+  document.getElementById('pieceCount').textContent = placedPieces.length;
+  if (placedPieces.length > 0) {
+    document.getElementById('dropHint').classList.add('hidden');
+  }
+}
+
+// ─── CANVAS MOUSE COORDS ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('blueprintCanvas');
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round(e.clientX - rect.left);
+    const y = Math.round(e.clientY - rect.top);
+    document.getElementById('coords').textContent = `${x}, ${y}`;
+  });
+  connectGemini();
+});
+
+// ─── TOOLBAR ACTIONS ──────────────────────────────────────────────────
+function clearCanvas() {
+  if (!confirm('¿Borrar todas las piezas del lienzo?')) return;
+  placedPieces.forEach(p => p.el.remove());
+  placedPieces = [];
+  updatePieceCount();
+  document.getElementById('dropHint').classList.remove('hidden');
+}
+
+function exportJSON() {
+  const data = {
+    maquina: 'Plano generado con MaquinaPlanos',
+    fecha: new Date().toISOString(),
+    piezas: placedPieces.map(p => ({
+      nombre: p.piece.nombre,
+      descripcion: p.piece.descripcion,
+      dimensiones: p.piece.dimensiones,
+      posicion: { x: parseInt(p.el.style.left), y: parseInt(p.el.style.top) }
+    }))
+  };
+  document.getElementById('modalTitle').textContent = 'Exportar JSON';
+  document.getElementById('modalContent').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('exportModal').classList.add('open');
+}
+
+function exportSVG() {
+  const canvas = document.getElementById('blueprintCanvas');
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${w}" height="${h}" fill="#0a0a0f"/>
+  <defs>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,212,255,0.08)" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="${w}" height="${h}" fill="url(#grid)"/>`;
+
+  placedPieces.forEach(p => {
+    const x = parseInt(p.el.style.left);
+    const y = parseInt(p.el.style.top);
+    svg += `
+  <g transform="translate(${x},${y})">
+    <rect width="160" height="60" rx="8" fill="#1a1a26" stroke="#00d4ff" stroke-width="1.5"/>
+    <text x="10" y="18" font-family="monospace" font-size="9" fill="#00d4ff" font-weight="bold">${p.piece.icono} ${p.piece.nombre}</text>
+    <text x="10" y="33" font-family="monospace" font-size="8" fill="#c0c0d0">${p.piece.descripcion.substring(0,30)}</text>
+    <text x="10" y="48" font-family="monospace" font-size="7" fill="#6b6b80">${p.piece.dimensiones || ''}</text>
+  </g>`;
+  });
+
+  svg += '\n</svg>';
+  document.getElementById('modalTitle').textContent = 'Exportar SVG';
+  document.getElementById('modalContent').textContent = svg;
+  document.getElementById('exportModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('exportModal').classList.remove('open');
+}
+
+function copyExport() {
+  navigator.clipboard.writeText(document.getElementById('modalContent').textContent);
+  const btn = event.target;
+  btn.textContent = '✅ Copiado';
+  setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+}
+
+// Close modal on overlay click
+document.getElementById('exportModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Keyboard: delete selected piece
+document.addEventListener('keydown', (e) => {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedPiece &&
+      document.activeElement.tagName !== 'INPUT' &&
+      document.activeElement.tagName !== 'TEXTAREA') {
+    const id = selectedPiece.dataset.id;
+    deletePiece(id, { stopPropagation: () => {} });
+  }
+});
+</script>
+</body>
+</html>
