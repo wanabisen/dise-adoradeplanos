@@ -16,10 +16,10 @@ Diseña planos de máquinas con ayuda de Gemini AI. Una web interactiva donde la
 ### 1. Crea el repositorio
 
 ```bash
-# En GitHub, crea un nuevo repositorio llamado: maquinaplanos
+# En GitHub, crea un nuevo repositorio llamado: dise-adoradeplanos
 # Luego clónalo localmente:
-git clone https://github.com/wanabisen/maquinaplanos.git
-cd maquinaplanos
+git clone https://github.com/wanabisen/dise-adoradeplanos.git
+cd dise-adoradeplanos
 ```
 
 ### 2. Añade los archivos
@@ -27,8 +27,8 @@ cd maquinaplanos
 Copia el archivo `index.html` en la raíz del repositorio.
 
 ```bash
-cp index.html maquinaplanos/
-cd maquinaplanos
+cp index.html dise-adoradeplanos/
+cd dise-adoradeplanos
 git add .
 git commit -m "🚀 Primera versión de MaquinaPlanos"
 git push origin main
@@ -39,7 +39,7 @@ git push origin main
 1. Ve a tu repositorio en GitHub
 2. `Settings` → `Pages`
 3. En **Source**, selecciona `main` branch y carpeta `/root`
-4. Guarda. En 1-2 minutos estará en: `https://wanabisen.github.io/maquinaplanos`
+4. Guarda. En 1-2 minutos estará en: `https://wanabisen.github.io/dise-adoradeplanos`
 
 ## 🔑 API Key de Gemini
 
