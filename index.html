@@ -447,51 +447,134 @@
   .canvas-ruler-h { top: 0; left: 20px; right: 0; height: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
   .canvas-ruler-v { left: 0; top: 20px; bottom: 0; width: 20px; border-right: 1px solid var(--border); }
 
-  /* Placed pieces on canvas */
+  /* ── PLACED PIECES ─────────────────────────────────────────── */
   .placed-piece {
     position: absolute;
-    background: rgba(26,26,38,0.95);
+    width: 140px;
+    background: rgba(15,15,25,0.97);
     border: 1.5px solid var(--accent2);
-    border-radius: 8px;
-    padding: 8px 14px;
+    border-radius: 12px;
     cursor: move;
     user-select: none;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    min-width: 100px;
-    box-shadow: 0 0 0 1px rgba(0,212,255,0.1), 0 4px 20px rgba(0,0,0,0.4);
-    transition: box-shadow 0.15s;
+    align-items: center;
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.08), 0 6px 24px rgba(0,0,0,0.5);
+    transition: box-shadow 0.15s, border-color 0.15s;
     z-index: 10;
+    overflow: visible;
   }
   .placed-piece:hover {
-    box-shadow: 0 0 0 2px var(--accent2), 0 8px 30px rgba(0,212,255,0.2);
+    box-shadow: 0 0 0 2px var(--accent2), 0 10px 32px rgba(0,212,255,0.25);
   }
   .placed-piece.selected {
     border-color: var(--accent1);
-    box-shadow: 0 0 0 2px var(--accent1), 0 8px 30px rgba(255,107,53,0.3);
+    box-shadow: 0 0 0 2px var(--accent1), 0 10px 32px rgba(255,107,53,0.3);
   }
-  .placed-piece .piece-name {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--accent2);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .piece-icon-box {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(168,85,247,0.08));
+    border-bottom: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    padding: 14px 0 10px;
+    position: relative;
   }
-  .placed-piece .piece-label {
-    font-size: 0.75rem;
-    color: var(--text);
-    font-weight: 500;
+  .piece-color-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
   }
-  .placed-piece .piece-dim {
+  .piece-body {
+    padding: 8px 10px 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .piece-name {
     font-family: 'Space Mono', monospace;
     font-size: 0.6rem;
-    color: var(--muted);
+    color: var(--accent2);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.3;
   }
-  .placed-piece .delete-piece {
+  .placed-piece.selected .piece-name { color: var(--accent1); }
+  .piece-dim {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  /* Connection ports */
+  .port {
     position: absolute;
-    top: -8px; right: -8px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent2);
+    cursor: crosshair;
+    z-index: 20;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .port:hover { background: var(--accent2); transform: scale(1.3); }
+  .port.port-top    { top: -6px;    left: 50%; transform: translateX(-50%); }
+  .port.port-bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
+  .port.port-left   { left: -6px;   top: 50%;  transform: translateY(-50%); }
+  .port.port-right  { right: -6px;  top: 50%;  transform: translateY(-50%); }
+  .port:hover { transform: translateX(-50%) scale(1.4); }
+  .port.port-left:hover, .port.port-right:hover { transform: translateY(-50%) scale(1.4); }
+  .port.connecting { background: var(--accent1); border-color: var(--accent1); animation: portPulse 0.8s infinite; }
+  @keyframes portPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,0.5)} 50%{box-shadow:0 0 0 6px rgba(255,107,53,0)} }
+
+  .delete-piece {
+    position: absolute;
+    top: -9px; right: -9px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 30;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .placed-piece:hover .delete-piece,
+  .placed-piece.selected .delete-piece { display: flex; }
+
+  /* SVG connections layer */
+  #connectionsLayer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .connection-line {
+    stroke: var(--accent2);
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 6 3;
+    animation: dash 1.5s linear infinite;
+    opacity: 0.6;
+  }
+  .connection-line.selected-conn {
+    stroke: var(--accent1);
+    opacity: 1;
+  }
+  @keyframes dash { to { stroke-dashoffset: -18; } }
+  .conn-delete-btn {
+    position: absolute;
     background: #ef4444;
     color: #fff;
     border: none;
@@ -499,14 +582,35 @@
     width: 18px; height: 18px;
     font-size: 0.65rem;
     cursor: pointer;
-    display: none;
-    align-items: center; justify-content: center;
-    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 25;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    pointer-events: all;
   }
-  .placed-piece:hover .delete-piece,
-  .placed-piece.selected .delete-piece {
-    display: flex;
+
+  /* Tooltip */
+  .piece-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 50;
+    max-width: 200px;
+    white-space: normal;
+    text-align: center;
   }
+  .placed-piece:hover .piece-tooltip { opacity: 1; }
 
   /* DROP ZONE HINT */
   .drop-hint {
@@ -728,6 +832,7 @@
         ondrop="onDrop(event)"
         ondragleave="onDragLeave(event)"
         onclick="deselectAll()">
+        <svg id="connectionsLayer"></svg>
         <div class="drop-hint" id="dropHint">
           <div class="drop-hint-icon">📦</div>
           <div class="drop-hint-text">Arrastra las piezas aquí<br>para construir tu plano</div>
@@ -976,14 +1081,18 @@ function autoResize(el) {
 }
 
 // ─── PALETTE ──────────────────────────────────────────────────────────
+const PIECE_COLORS = ['#00d4ff','#ff6b35','#a855f7','#22c55e','#f59e0b','#ec4899','#06b6d4','#84cc16','#f97316','#8b5cf6'];
+
 function renderPalette() {
   const panel = document.getElementById('palettePanel');
   panel.innerHTML = '<span class="palette-label">Piezas:</span>';
 
-  pieces.forEach(piece => {
+  pieces.forEach((piece, i) => {
+    piece._color = PIECE_COLORS[i % PIECE_COLORS.length];
     const chip = document.createElement('div');
     chip.className = 'piece-chip';
     chip.draggable = true;
+    chip.style.borderColor = piece._color;
     chip.innerHTML = `<span class="piece-icon">${piece.icono}</span>${piece.nombre}`;
     chip.title = piece.descripcion;
     chip.dataset.pieceId = piece.id;
@@ -1029,23 +1138,48 @@ function placePiece(piece, x, y) {
   el.style.left = Math.max(0, x) + 'px';
   el.style.top = Math.max(0, y) + 'px';
 
-  const id = Date.now() + Math.random();
+  const id = String(Date.now()) + String(Math.floor(Math.random()*10000));
   el.dataset.id = id;
+  const color = piece._color || '#00d4ff';
 
   el.innerHTML = `
-    <div class="piece-name">${piece.icono} ${piece.nombre}</div>
-    <div class="piece-label">${piece.descripcion}</div>
-    <div class="piece-dim">${piece.dimensiones || ''}</div>
-    <button class="delete-piece" onclick="deletePiece('${id}',event)">×</button>
+    <div class="piece-tooltip">${piece.descripcion || ''}</div>
+    <div class="piece-icon-box">
+      <div class="piece-color-bar" style="background:${color}"></div>
+      <span style="filter:drop-shadow(0 0 6px ${color}44)">${piece.icono}</span>
+    </div>
+    <div class="piece-body">
+      <div class="piece-name" style="color:${color}">${piece.nombre}</div>
+      <div class="piece-dim">${piece.dimensiones || ''}</div>
+    </div>
+    <div class="port port-top"    data-piece="${id}" data-side="top"></div>
+    <div class="port port-bottom" data-piece="${id}" data-side="bottom"></div>
+    <div class="port port-left"   data-piece="${id}" data-side="left"></div>
+    <div class="port port-right"  data-piece="${id}" data-side="right"></div>
+    <button class="delete-piece" data-id="${id}">×</button>
   `;
 
-  // Drag to move
+  // Delete button
+  el.querySelector('.delete-piece').addEventListener('click', (e) => {
+    e.stopPropagation();
+    removePieceById(id);
+  });
+
+  // Port click → connect
+  el.querySelectorAll('.port').forEach(port => {
+    port.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      startConnection(e, id, port.dataset.side);
+    });
+  });
+
   el.addEventListener('mousedown', startMovePiece);
   el.addEventListener('click', (e) => { e.stopPropagation(); selectPiece(el); });
 
   canvas.appendChild(el);
-  placedPieces.push({ id, piece, el });
+  placedPieces.push({ id, piece, el, color });
   updatePieceCount();
+  redrawConnections();
 }
 
 function startMovePiece(e) {
@@ -1067,6 +1201,7 @@ function startMovePiece(e) {
     ny = Math.max(0, Math.min(cr.height - el.offsetHeight, ny));
     el.style.left = nx + 'px';
     el.style.top = ny + 'px';
+    redrawConnections();
   };
   const onUp = () => {
     draggingPlaced = null;
@@ -1088,15 +1223,21 @@ function deselectAll() {
   selectedPiece = null;
 }
 
-function deletePiece(id, e) {
-  e.stopPropagation();
+function removePieceById(id) {
   const idx = placedPieces.findIndex(p => p.id == id);
   if (idx !== -1) {
     placedPieces[idx].el.remove();
     placedPieces.splice(idx, 1);
   }
+  // Remove connections involving this piece
+  connections = connections.filter(c => {
+    if (c.fromId == id || c.toId == id) { c.btnEl && c.btnEl.remove(); return false; }
+    return true;
+  });
   updatePieceCount();
+  redrawConnections();
 }
+function deletePiece(id, e) { e && e.stopPropagation && e.stopPropagation(); removePieceById(id); }
 
 function updatePieceCount() {
   document.getElementById('pieceCount').textContent = placedPieces.length;
@@ -1104,6 +1245,117 @@ function updatePieceCount() {
     document.getElementById('dropHint').classList.add('hidden');
   }
 }
+
+// ─── CONNECTIONS ──────────────────────────────────────────────────────
+let connections = []; // {fromId, fromSide, toId, toSide, btnEl}
+let connectingFrom = null; // {pieceId, side, portEl}
+
+function getPortCenter(pieceId, side) {
+  const pp = placedPieces.find(p => p.id == pieceId);
+  if (!pp) return null;
+  const el = pp.el;
+  const canvas = document.getElementById('blueprintCanvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const x = er.left - cr.left;
+  const y = er.top - cr.top;
+  const w = er.width; const h = er.height;
+  if (side === 'top')    return { x: x + w/2, y: y };
+  if (side === 'bottom') return { x: x + w/2, y: y + h };
+  if (side === 'left')   return { x: x,       y: y + h/2 };
+  if (side === 'right')  return { x: x + w,   y: y + h/2 };
+}
+
+function startConnection(e, pieceId, side) {
+  e.preventDefault();
+  const port = e.currentTarget;
+  if (connectingFrom) {
+    // Complete connection
+    if (connectingFrom.pieceId !== pieceId) {
+      addConnection(connectingFrom.pieceId, connectingFrom.side, pieceId, side);
+    }
+    connectingFrom.portEl.classList.remove('connecting');
+    connectingFrom = null;
+    document.getElementById('blueprintCanvas').style.cursor = 'crosshair';
+    removeTempLine();
+  } else {
+    connectingFrom = { pieceId, side, portEl: port };
+    port.classList.add('connecting');
+    document.getElementById('blueprintCanvas').style.cursor = 'cell';
+  }
+}
+
+let tempLine = null;
+function removeTempLine() {
+  if (tempLine) { tempLine.remove(); tempLine = null; }
+}
+
+function addConnection(fromId, fromSide, toId, toSide) {
+  // Avoid duplicates
+  const dup = connections.find(c =>
+    (c.fromId==fromId&&c.fromSide==fromSide&&c.toId==toId&&c.toSide==toSide) ||
+    (c.fromId==toId&&c.fromSide==toSide&&c.toId==fromId&&c.toSide==fromSide)
+  );
+  if (dup) return;
+  connections.push({ fromId, fromSide, toId, toSide, btnEl: null });
+  redrawConnections();
+}
+
+function redrawConnections() {
+  const svg = document.getElementById('connectionsLayer');
+  // Remove old lines and buttons
+  svg.querySelectorAll('.connection-line').forEach(l => l.remove());
+  document.querySelectorAll('.conn-delete-btn').forEach(b => b.remove());
+
+  connections.forEach((conn, i) => {
+    const a = getPortCenter(conn.fromId, conn.fromSide);
+    const b = getPortCenter(conn.toId, conn.toSide);
+    if (!a || !b) return;
+
+    // Bezier control points
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const cx1 = a.x + (conn.fromSide === 'right' ? Math.abs(dx)*0.5 : conn.fromSide === 'left' ? -Math.abs(dx)*0.5 : 0);
+    const cy1 = a.y + (conn.fromSide === 'bottom' ? Math.abs(dy)*0.5 : conn.fromSide === 'top' ? -Math.abs(dy)*0.5 : 0);
+    const cx2 = b.x + (conn.toSide === 'right' ? Math.abs(dx)*0.5 : conn.toSide === 'left' ? -Math.abs(dx)*0.5 : 0);
+    const cy2 = b.y + (conn.toSide === 'bottom' ? Math.abs(dy)*0.5 : conn.toSide === 'top' ? -Math.abs(dy)*0.5 : 0);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M ${a.x} ${a.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${b.x} ${b.y}`);
+    path.classList.add('connection-line');
+
+    // Color from source piece
+    const pp = placedPieces.find(p => p.id == conn.fromId);
+    if (pp) path.style.stroke = pp.color;
+
+    svg.appendChild(path);
+
+    // Delete button at midpoint
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const canvas = document.getElementById('blueprintCanvas');
+    const btn = document.createElement('button');
+    btn.className = 'conn-delete-btn';
+    btn.textContent = '×';
+    btn.style.left = mx + 'px';
+    btn.style.top = my + 'px';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      connections.splice(i, 1);
+      redrawConnections();
+    });
+    canvas.appendChild(btn);
+    conn.btnEl = btn;
+  });
+}
+
+// Cancel connection on canvas click
+document.addEventListener('click', (e) => {
+  if (connectingFrom && !e.target.classList.contains('port')) {
+    connectingFrom.portEl.classList.remove('connecting');
+    connectingFrom = null;
+    document.getElementById('blueprintCanvas').style.cursor = 'crosshair';
+  }
+});
 
 // ─── CANVAS MOUSE COORDS ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
